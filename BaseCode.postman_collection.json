@@ -1,0 +1,1124 @@
+{
+  "info": {
+    "_postman_id": "7dda9472-c5cb-4f70-964b-923080eb5a0b",
+    "name": "BaseCode",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51519282",
+    "_collection_link": "https://go.postman.co/collection/51519282-7dda9472-c5cb-4f70-964b-923080eb5a0b?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Login/Regis",
+      "item": [
+        {
+          "name": "Login Buyer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"Username\": \"Sindel\",\r\n    \"Password\": \"c97e0953\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/LoginBuyer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "LoginBuyer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Seller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"Username\": \"Mtony\",\r\n    \"Password\": \"mrcnthnyzpt\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/LoginSeller",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "LoginSeller"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout Seller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SessionKey\": \"92890246-4338-4d82-bea7-b30edd3fbc1f\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/LogoutSeller",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "LogoutSeller"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout Buyer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SessionKey\": \"550ea174-9e2e-4b93-88c3-4224384bc4d4\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/LogoutBuyer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "LogoutBuyer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Buyer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"FirstName\": \"Ralph Laurence\",\r\n    \"LastName\": \"Cruz\",\r\n    \"UserName\": \"Sindel2\",\r\n    \"Email\": \"ralplaurence50@gmail.com\",\r\n    \"ContactNo\": \"09673745627\",\r\n    \"UserType\": \"B\", \r\n    \"PassPreference\": \"email\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/RegisterBuyer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "RegisterBuyer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Seller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"FirstName\": \"Marc Anthony\",\r\n    \"LastName\": \"Zapata\",\r\n    \"UserName\": \"Mtony\",\r\n    \"Email\": \"mrcnthnyzpt@gmail.com\",\r\n    \"ContactNo\": \"09673745627\",\r\n    \"UserType\": \"S\",  \r\n    \"StoreName\": \"DI MAKAUSAD\",  \r\n    \"PassPreference\": \"email\"  \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/RegisterSeller",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "RegisterSeller"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OTP",
+      "item": [
+        {
+          "name": "OTP Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"UserId\": 6,\r\n    \"OTP\": \"4EAB8DD2\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/VerifyOTP",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "VerifyOTP"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request New OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"Email\": \"mrcnthnyzpt@gmail.com\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/RequestNewOTP",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "RequestNewOTP"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Password",
+      "item": [
+        {
+          "name": "Change Password Seller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"UserId\": 6,\r\n    \"CurrentPassword\": \"8570320a\",\r\n    \"NewPassword\": \"mrcnthnyzpt\",\r\n    \"SessionKey\" : \"13af19e4-88ec-428d-a514-c414f5eba870\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ChangePasswordSeller",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ChangePasswordSeller"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password Buyer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"UserId\": 6,\r\n    \"CurrentPassword\": \"152e8c99\",\r\n    \"NewPassword\": \"ralphlaurencecruzhaha\",\r\n    \"SessionKey\" : \"dfad06d7-a4d8-46c2-8e11-5d649ff9362e\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ChangePasswordBuyer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ChangePasswordBuyer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password Seller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"Email\": \"mrcnthnyzpt@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ForgotPasswordSeller",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ForgotPasswordSeller"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password Buyer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"Email\": \"ralplaurence50@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ForgotPasswordBuyer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ForgotPasswordBuyer"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Seller/Buyer Profile",
+      "item": [
+        {
+          "name": "Delete Seller",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n     \"UserId\": 1,\r\n     \"SessionKey\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/DeleteSeller",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "DeleteSeller"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Seller Profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"649a13c5-3e56-49d5-994e-91d25b3886c0\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetSellerProfile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetSellerProfile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Buyer Profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"1809df33-3f18-425c-b53c-8d0fc999c733\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetBuyerProfile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetBuyerProfile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Buyer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n     \"UserId\": 1,\r\n     \"SessionKey\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/DeleteBuyer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "DeleteBuyer"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Add Product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"b834b86f-4bf8-4558-bab7-d3bc8780f6e5\",\r\n    \"ProductName\": \"iPhone 15 Pro\",\r\n    \"ProductDescription\": \"Latest Apple smartphone with A17 chip, titanium body\",\r\n    \"Price\": 69999.99,\r\n    \"Quantity\": 50,\r\n    \"Category\": \"Electronics\",\r\n    \"Brand\": \"Apple\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/AddProduct",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "AddProduct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"sellerId\": 6,\r\n  \"productId\": 13,\r\n  \"sessionKey\": \"4932bc5f-2b8f-4d6e-b377-89ed381e30e1\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/DeleteProduct",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "DeleteProduct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"4932bc5f-2b8f-4d6e-b377-89ed381e30e1\",\r\n    \"ProductId\": 1,\r\n    \"Price\": 74999.99,\r\n    \"Quantity\": 100\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/UpdateProduct",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "UpdateProduct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Products",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"e98b7328-049f-42f9-947d-e661f0f95b02\",\r\n    \"Keyword\": \"laptop\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetProducts",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetProducts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Products By Category",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"CategoryId\": 5\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetProductsByCategory",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetProductsByCategory"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Add To Cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"e98b7328-049f-42f9-947d-e661f0f95b02\",\r\n    \"ProductId\": 1,\r\n    \"Quantity\": 5\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/AddToCart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "AddToCart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"2238d9ed-2238-4970-9e70-707373bedb70\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetCart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetCart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Item in Cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"90a8f475-4451-4962-b4bb-1944fd48155d\",\r\n    \"CartId\": 1,\r\n    \"NewQuantity\": 18\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/UpdateCartItem",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "UpdateCartItem"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from Cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"90a8f475-4451-4962-b4bb-1944fd48155d\",\r\n    \"CartId\": 3\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/RemoveFromCart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "RemoveFromCart"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"90a8f475-4451-4962-b4bb-1944fd48155d\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ClearCart",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ClearCart"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vouchers",
+      "item": [
+        {
+          "name": "Create Voucher",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"faa8e2a9-bba2-4ba9-8950-aa88261313a2\",\r\n    \"VoucherCode\": \"SAVE10000\",\r\n    \"VoucherName\": \"Save ₱10000\",\r\n    \"VoucherDescription\": \"Get ₱20 off on any purchase\",\r\n    \"DiscountAmount\": 10000.00,\r\n    \"MinimumSpend\": 100.00,\r\n    \"ValidFrom\": \"2024-03-06\",\r\n    \"ValidTo\": \"2024-12-31\",\r\n    \"MaxUses\": 50\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/CreateVoucher",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "CreateVoucher"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Voucher",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"VoucherId\": 4,\r\n    \"SessionKey\": \"faa8e2a9-bba2-4ba9-8950-aa88261313a2\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/DeleteVoucher",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "DeleteVoucher"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Vouchers",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"faa8e2a9-bba2-4ba9-8950-aa88261313a2\",\r\n    \"Status\": \"ALL\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetVouchers",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetVouchers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Vouchers",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"SellerId\": 6,\r\n    \"SessionKey\": \"90a8f475-4451-4962-b4bb-1944fd48155d\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetActiveVouchers",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetActiveVouchers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Voucher",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"VoucherCode\": \"SAVE100\",\r\n    \"CartTotal\": 150.00\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ValidateVoucher",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ValidateVoucher"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Voucher",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"UserId\": 6,\r\n    \"SessionKey\": \"2238d9ed-2238-4970-9e70-707373bedb70\",\r\n    \"UserType\": \"BUYER\",\r\n    \"VoucherCode\": \"SAVE100\",\r\n    \"CartTotal\": 250.00,\r\n    \"OrderId\": 456 \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/ApplyVoucher",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "ApplyVoucher"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Review/Comments",
+      "item": [
+        {
+          "name": "Add Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ProductId\": 1,\r\n    \"BuyerId\": 6,\r\n    \"SessionKey\": \"d12438e8-a897-402b-a8f5-5b96ab16cc11\",\r\n    \"UserType\": \"BUYER\",\r\n    \"Rating\": 5,\r\n    \"ReviewText\": \"Great product! Very satisfied with the quality and shipping was fast.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/AddReview",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "AddReview"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ProductId\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetProductReviews",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetProductReviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Comments",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ProductId\": 1,\r\n    \"UserId\": 6,\r\n    \"SessionKey\": \"d12438e8-a897-402b-a8f5-5b96ab16cc11\",\r\n    \"UserType\": \"BUYER\",\r\n    \"CommentText\": \"Does this product come in different colors?\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/AddComment",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "AddComment"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Comments",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"UserId\": 6,\r\n    \"SessionKey\": \"2238d9ed-2238-4970-9e70-707373bedb70\",\r\n    \"UserType\": \"BUYER\",\r\n    \"VoucherCode\": \"SAVE100\",\r\n    \"CartTotal\": 250.00,\r\n    \"OrderId\": 456 \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/BaseCode/GetProductComments",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "BaseCode",
+                "GetProductComments"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
