@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BaseCode")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e620fef77aae2fab7c73972601545a25ab932a2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+62a30083d0af9466f8363fb3b234e0de7a9de00e")]
 [assembly: System.Reflection.AssemblyProductAttribute("BaseCode")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BaseCode")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

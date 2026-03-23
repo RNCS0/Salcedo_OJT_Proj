@@ -2348,5 +2348,414 @@ namespace BaseCode.Controllers
         }
 
         // ----------------------------------------------------------------------------------------
+
+        // E-Wallet ----------------------------------------------------------------------------------------------------------
+
+        // Request Wallet Code
+        [HttpPost("RequestWalletCode")]
+        public IActionResult RequestWalletCode([FromBody] RequestWalletCodeRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            RequestWalletCodeResponse resp = new RequestWalletCodeResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.UserId <= 0)
+            {
+                resp.Message = "Please provide User ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.UserType) || (r.UserType.ToUpper() != "SELLER" && r.UserType.ToUpper() != "BUYER"))
+            {
+                resp.Message = "Valid User Type (SELLER or BUYER) is required";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.Email))
+            {
+                resp.Message = "Please provide Email";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, r.UserType, activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionUserId = db.GetUserIdFromSession(r.SessionKey, r.UserType);
+            if (sessionUserId != r.UserId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "User ID does not match session";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.RequestWalletCode(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Create Wallet 
+        [HttpPost("CreateWallet")]
+        public IActionResult CreateWallet([FromBody] CreateWalletRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            CreateWalletResponse resp = new CreateWalletResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.UserId <= 0)
+            {
+                resp.Message = "Please provide User ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.UserType) || (r.UserType.ToUpper() != "SELLER" && r.UserType.ToUpper() != "BUYER"))
+            {
+                resp.Message = "Valid User Type (SELLER or BUYER) is required";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.Email))
+            {
+                resp.Message = "Please provide Email";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.VerificationCode))
+            {
+                resp.Message = "Please provide Verification Code";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, r.UserType, activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionUserId = db.GetUserIdFromSession(r.SessionKey, r.UserType);
+            if (sessionUserId != r.UserId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "User ID does not match session";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.CreateWallet(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Deposit to Wallet
+        [HttpPost("DepositToWallet")]
+        public IActionResult DepositToWallet([FromBody] WalletDepositRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            WalletDepositResponse resp = new WalletDepositResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.UserId <= 0)
+            {
+                resp.Message = "Please provide User ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.UserType) || (r.UserType.ToUpper() != "SELLER" && r.UserType.ToUpper() != "BUYER"))
+            {
+                resp.Message = "Valid User Type (SELLER or BUYER) is required";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (r.Amount <= 0)
+            {
+                resp.Message = "Deposit amount must be greater than 0";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, r.UserType, activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionUserId = db.GetUserIdFromSession(r.SessionKey, r.UserType);
+            if (sessionUserId != r.UserId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "User ID does not match session";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.DepositToWallet(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Withdraw from Wallet
+        [HttpPost("WithdrawFromWallet")]
+        public IActionResult WithdrawFromWallet([FromBody] WalletWithdrawRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            WalletWithdrawResponse resp = new WalletWithdrawResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.UserId <= 0)
+            {
+                resp.Message = "Please provide User ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.UserType) || (r.UserType.ToUpper() != "SELLER" && r.UserType.ToUpper() != "BUYER"))
+            {
+                resp.Message = "Valid User Type (SELLER or BUYER) is required";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (r.Amount <= 0)
+            {
+                resp.Message = "Withdrawal amount must be greater than 0";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, r.UserType, activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionUserId = db.GetUserIdFromSession(r.SessionKey, r.UserType);
+            if (sessionUserId != r.UserId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "User ID does not match session";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.WithdrawFromWallet(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Get Wallet Balance
+        [HttpPost("GetWalletBalance")]
+        public IActionResult GetWalletBalance([FromBody] GetWalletBalanceRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            GetWalletBalanceResponse resp = new GetWalletBalanceResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.UserId <= 0)
+            {
+                resp.Message = "Please provide User ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.UserType) || (r.UserType.ToUpper() != "SELLER" && r.UserType.ToUpper() != "BUYER"))
+            {
+                resp.Message = "Valid User Type (SELLER or BUYER) is required";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, r.UserType, activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionUserId = db.GetUserIdFromSession(r.SessionKey, r.UserType);
+            if (sessionUserId != r.UserId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "User ID does not match session";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.GetWalletBalance(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Get Wallet Transactions
+        [HttpPost("GetWalletTransactions")]
+        public IActionResult GetWalletTransactions([FromBody] GetWalletTransactionsRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            GetWalletTransactionsResponse resp = new GetWalletTransactionsResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.UserId <= 0)
+            {
+                resp.Message = "Please provide User ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.UserType) || (r.UserType.ToUpper() != "SELLER" && r.UserType.ToUpper() != "BUYER"))
+            {
+                resp.Message = "Valid User Type (SELLER or BUYER) is required";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, r.UserType, activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionUserId = db.GetUserIdFromSession(r.SessionKey, r.UserType);
+            if (sessionUserId != r.UserId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "User ID does not match session";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.GetWalletTransactions(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
     }
 }
