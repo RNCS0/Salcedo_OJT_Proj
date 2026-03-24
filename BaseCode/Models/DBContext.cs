@@ -1650,7 +1650,163 @@ namespace BaseCode.Models
 
         // ----------------------------------------------------------------------------------------------
 
+        // Get Seller Dashboard -------------------------------------------------------------------------
+        public GetSellerDashboardResponse GetSellerDashboard(GetSellerDashboardRequest r)
+        {
+            GetSellerDashboardResponse resp = new GetSellerDashboardResponse();
+            string activeStatus = GetSettingsValue("ACTIVE");
+            string inactiveStatus = GetSettingsValue("INACTIVE");
+            string soldOutStatus = GetSettingsValue("SOLD_OUT");
+            DateTime now = DateTime.Now;
+            string todayStart = now.Date.ToString("yyyy-MM-dd 00:00:00");
+            string todayEnd = now.Date.ToString("yyyy-MM-dd 23:59:59");
 
+            resp.RecentOrders = new List<RecentOrderItem>();
+            resp.TopProducts = new List<TopProductItem>();
+
+            // Get product statistics
+            string productQuery = "SELECT " +
+                                  "COUNT(*) as TotalProducts, " +
+                                  "SUM(CASE WHEN PRODUCT_STATUS = '" + activeStatus + "' THEN 1 ELSE 0 END) as ActiveProducts, " +
+                                  "SUM(CASE WHEN PRODUCT_STATUS = '" + inactiveStatus + "' THEN 1 ELSE 0 END) as InactiveProducts, " +
+                                  "SUM(CASE WHEN PRODUCT_STATUS = '" + soldOutStatus + "' THEN 1 ELSE 0 END) as SoldOutProducts " +
+                                  "FROM PRODUCTS WHERE SELLER_ID = " + r.SellerId;
+
+            GenericGetDataResponse productStats = GetData(productQuery);
+            if (productStats.isSuccess && productStats.Data.Rows.Count > 0)
+            {
+                resp.TotalProducts = Convert.ToInt32(productStats.Data.Rows[0]["TotalProducts"]);
+                resp.ActiveProducts = Convert.ToInt32(productStats.Data.Rows[0]["ActiveProducts"]);
+                resp.InactiveProducts = Convert.ToInt32(productStats.Data.Rows[0]["InactiveProducts"]);
+                resp.SoldOutProducts = Convert.ToInt32(productStats.Data.Rows[0]["SoldOutProducts"]);
+            }
+
+            // Get order statistics
+            string orderQuery = "SELECT " +
+                                "COUNT(*) as TotalOrders, " +
+                                "SUM(CASE WHEN ORDER_STATUS = 'PENDING' THEN 1 ELSE 0 END) as PendingOrders, " +
+                                "SUM(CASE WHEN ORDER_STATUS = 'COMPLETED' THEN 1 ELSE 0 END) as CompletedOrders, " +
+                                "SUM(CASE WHEN ORDER_STATUS = 'CANCELLED' THEN 1 ELSE 0 END) as CancelledOrders, " +
+                                "SUM(CASE WHEN ORDER_STATUS = 'COMPLETED' THEN TOTAL_AMOUNT ELSE 0 END) as TotalSales " +
+                                "FROM ORDERS WHERE SELLER_ID = " + r.SellerId;
+
+            GenericGetDataResponse orderStats = GetData(orderQuery);
+            if (orderStats.isSuccess && orderStats.Data.Rows.Count > 0)
+            {
+                resp.TotalOrders = Convert.ToInt32(orderStats.Data.Rows[0]["TotalOrders"]);
+                resp.PendingOrders = Convert.ToInt32(orderStats.Data.Rows[0]["PendingOrders"]);
+                resp.CompletedOrders = Convert.ToInt32(orderStats.Data.Rows[0]["CompletedOrders"]);
+                resp.CancelledOrders = Convert.ToInt32(orderStats.Data.Rows[0]["CancelledOrders"]);
+                resp.TotalSales = orderStats.Data.Rows[0]["TotalSales"] != DBNull.Value ? Convert.ToDecimal(orderStats.Data.Rows[0]["TotalSales"]) : 0;
+            }
+
+            // Get today's sales
+            string todaySalesQuery = "SELECT SUM(TOTAL_AMOUNT) as TodaySales FROM ORDERS " +
+                                     "WHERE SELLER_ID = " + r.SellerId + " " +
+                                     "AND ORDER_STATUS = 'COMPLETED' " +
+                                     "AND ORDER_DATE BETWEEN '" + todayStart + "' AND '" + todayEnd + "'";
+
+            GenericGetDataResponse todaySales = GetData(todaySalesQuery);
+            if (todaySales.isSuccess && todaySales.Data.Rows.Count > 0 && todaySales.Data.Rows[0]["TodaySales"] != DBNull.Value)
+            {
+                resp.TodaySales = Convert.ToDecimal(todaySales.Data.Rows[0]["TodaySales"]);
+            }
+            else
+            {
+                resp.TodaySales = 0;
+            }
+
+            // Get this week's sales
+            DateTime weekStart = now.AddDays(-(int)now.DayOfWeek + 1);
+            string weekStartDate = weekStart.ToString("yyyy-MM-dd 00:00:00");
+            string weekSalesQuery = "SELECT SUM(TOTAL_AMOUNT) as WeekSales FROM ORDERS " +
+                                    "WHERE SELLER_ID = " + r.SellerId + " " +
+                                    "AND ORDER_STATUS = 'COMPLETED' " +
+                                    "AND ORDER_DATE >= '" + weekStartDate + "'";
+
+            GenericGetDataResponse weekSales = GetData(weekSalesQuery);
+            if (weekSales.isSuccess && weekSales.Data.Rows.Count > 0 && weekSales.Data.Rows[0]["WeekSales"] != DBNull.Value)
+            {
+                resp.ThisWeekSales = Convert.ToDecimal(weekSales.Data.Rows[0]["WeekSales"]);
+            }
+            else
+            {
+                resp.ThisWeekSales = 0;
+            }
+
+            // Get this month's sales
+            string monthStart = new DateTime(now.Year, now.Month, 1).ToString("yyyy-MM-dd 00:00:00");
+            string monthSalesQuery = "SELECT SUM(TOTAL_AMOUNT) as MonthSales FROM ORDERS " +
+                                     "WHERE SELLER_ID = " + r.SellerId + " " +
+                                     "AND ORDER_STATUS = 'COMPLETED' " +
+                                     "AND ORDER_DATE >= '" + monthStart + "'";
+
+            GenericGetDataResponse monthSales = GetData(monthSalesQuery);
+            if (monthSales.isSuccess && monthSales.Data.Rows.Count > 0 && monthSales.Data.Rows[0]["MonthSales"] != DBNull.Value)
+            {
+                resp.ThisMonthSales = Convert.ToDecimal(monthSales.Data.Rows[0]["MonthSales"]);
+            }
+            else
+            {
+                resp.ThisMonthSales = 0;
+            }
+
+            // Get recent orders 
+            string recentOrdersQuery = "SELECT o.ORDER_ID, o.TOTAL_AMOUNT, o.ORDER_STATUS, o.ORDER_DATE, " +
+                                       "CONCAT(b.BUYER_FIRST_NAME, ' ', b.BUYER_LAST_NAME) as BUYER_NAME " +
+                                       "FROM ORDERS o " +
+                                       "JOIN BUYERS b ON o.BUYER_ID = b.BUYER_ID " +
+                                       "WHERE o.SELLER_ID = " + r.SellerId + " " +
+                                       "ORDER BY o.ORDER_DATE DESC LIMIT 5";
+
+            GenericGetDataResponse recentOrders = GetData(recentOrdersQuery);
+            if (recentOrders.isSuccess && recentOrders.Data.Rows.Count > 0)
+            {
+                foreach (DataRow dr in recentOrders.Data.Rows)
+                {
+                    RecentOrderItem item = new RecentOrderItem();
+                    item.OrderId = Convert.ToInt32(dr["ORDER_ID"]);
+                    item.BuyerName = dr["BUYER_NAME"].ToString();
+                    item.TotalAmount = Convert.ToDecimal(dr["TOTAL_AMOUNT"]);
+                    item.Status = dr["ORDER_STATUS"].ToString();
+                    item.OrderDate = Convert.ToDateTime(dr["ORDER_DATE"]);
+                    resp.RecentOrders.Add(item);
+                }
+            }
+
+            // Get top products 
+            string topProductsQuery = "SELECT p.PRODUCT_ID, p.PRODUCT_NAME, " +
+                                      "SUM(oi.QUANTITY) as UNITS_SOLD, " +
+                                      "SUM(oi.QUANTITY * oi.PRICE) as TOTAL_REVENUE " +
+                                      "FROM ORDER_ITEMS oi " +
+                                      "JOIN PRODUCTS p ON oi.PRODUCT_ID = p.PRODUCT_ID " +
+                                      "JOIN ORDERS o ON oi.ORDER_ID = o.ORDER_ID " +
+                                      "WHERE p.SELLER_ID = " + r.SellerId + " " +
+                                      "AND o.ORDER_STATUS = 'COMPLETED' " +
+                                      "GROUP BY p.PRODUCT_ID, p.PRODUCT_NAME " +
+                                      "ORDER BY UNITS_SOLD DESC LIMIT 5";
+
+            GenericGetDataResponse topProducts = GetData(topProductsQuery);
+            if (topProducts.isSuccess && topProducts.Data.Rows.Count > 0)
+            {
+                foreach (DataRow dr in topProducts.Data.Rows)
+                {
+                    TopProductItem item = new TopProductItem();
+                    item.ProductId = Convert.ToInt32(dr["PRODUCT_ID"]);
+                    item.ProductName = dr["PRODUCT_NAME"].ToString();
+                    item.UnitsSold = Convert.ToInt32(dr["UNITS_SOLD"]);
+                    item.TotalRevenue = Convert.ToDecimal(dr["TOTAL_REVENUE"]);
+                    resp.TopProducts.Add(item);
+                }
+            }
+
+            resp.isSuccess = true;
+            resp.Message = "Dashboard data retrieved successfully";
+
+            return resp;
+        }
+
+        // ----------------------------------------------------------------------------------
 
 
 
@@ -1717,12 +1873,16 @@ namespace BaseCode.Models
             using (MySqlConnection conn = GetConnection())
             {
                 conn.Open();
-                int categoryId = GetOrCreateCategory(r.Category);
 
-                if (categoryId <= 0)
+                // Validate that category exists (predefined)
+                string checkCategoryQuery = "SELECT COUNT(*) FROM PRODUCT_CATEGORY WHERE CATEGORY_ID = " + r.CategoryId;
+                MySqlCommand checkCategoryCmd = new MySqlCommand(checkCategoryQuery, conn);
+                int categoryExists = Convert.ToInt32(checkCategoryCmd.ExecuteScalar());
+
+                if (categoryExists == 0)
                 {
                     resp.isSuccess = false;
-                    resp.Message = "Invalid category";
+                    resp.Message = "Invalid category. Please select a valid category.";
                     return resp;
                 }
 
@@ -1736,9 +1896,9 @@ namespace BaseCode.Models
                                      r.ProductDescription.Replace("'", "''") + "', " +
                                      r.Price + ", " +
                                      r.Quantity + ", " +
-                                     categoryId + ", '" +
+                                     r.CategoryId + ", '" +  // Use CategoryId directly
                                      (string.IsNullOrEmpty(r.Brand) ? "" : r.Brand.Replace("'", "''")) + "', '" +
-                                     initialStatus + "', '" +  // Use dynamic status instead of always ACTIVE
+                                     initialStatus + "', '" +
                                      dateAdded + "')";
 
                 MySqlCommand cmd = new MySqlCommand(productQuery, conn);
@@ -1755,46 +1915,9 @@ namespace BaseCode.Models
             return resp;
         }
 
-
-        private int GetOrCreateCategory(string categoryName)
-        {
-            string activeStatus = GetSettingsValue("ACTIVE");
-            DateTime currentDate = DateTime.Now;
-            string dateAdded = currentDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-            using (MySqlConnection conn = GetConnection())
-            {
-                conn.Open();
-
-                string checkQuery = "SELECT CATEGORY_ID FROM PRODUCT_CATEGORY WHERE CATEGORY_NAME = '" +
-                                   categoryName.Replace("'", "''") + "'";
-
-                MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn);
-                var result = checkCmd.ExecuteScalar();
-
-                if (result != null)
-                {
-                    int categoryId = Convert.ToInt32(result);
-                    conn.Close();
-                    return categoryId;
-                }
-                else
-                {
-                    string insertQuery = "INSERT INTO PRODUCT_CATEGORY (CATEGORY_NAME, DATE_ADDED) " +
-                                        "VALUES ('" + categoryName.Replace("'", "''") + "', '" + dateAdded + "')";
-
-                    MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn);
-                    insertCmd.ExecuteNonQuery();
-
-                    int newCategoryId = int.Parse(insertCmd.LastInsertedId.ToString());
-                    conn.Close();
-                    return newCategoryId;
-                }
-            }
-        }
         // ---------------------------------------------------------------------------------------------------------
 
-        // Update Product ------------------------------------------------------------------------------------------
+        // Update Product
         public UpdateProductResponse UpdateProduct(UpdateProductRequest r)
         {
             UpdateProductResponse resp = new UpdateProductResponse();
@@ -1832,10 +1955,9 @@ namespace BaseCode.Models
                 currentQuantity = r.Quantity.Value;
             }
 
-            if (!string.IsNullOrEmpty(r.Category))
+            if (r.CategoryId.HasValue && r.CategoryId.Value > 0)
             {
-                int categoryId = GetOrCreateCategory(r.Category);
-                updateFields.Add("CATEGORY_ID = " + categoryId);
+                updateFields.Add("CATEGORY_ID = " + r.CategoryId.Value);
             }
 
             if (!string.IsNullOrEmpty(r.Brand))
@@ -1861,6 +1983,40 @@ namespace BaseCode.Models
 
             resp.Message = genResp.Message;
             resp.isSuccess = genResp.isSuccess;
+
+            return resp;
+        }
+
+        public GetAllCategoriesResponse GetAllCategories()
+        {
+            GetAllCategoriesResponse resp = new GetAllCategoriesResponse();
+            resp.Categories = new List<CategoryItem>();
+
+            string query = "SELECT CATEGORY_ID, CATEGORY_NAME, DATE_ADDED FROM PRODUCT_CATEGORY ORDER BY CATEGORY_NAME";
+
+            GenericGetDataResponse getData = GetData(query);
+
+            if (getData.isSuccess && getData.Data.Rows.Count > 0)
+            {
+                foreach (DataRow dr in getData.Data.Rows)
+                {
+                    CategoryItem cat = new CategoryItem();
+                    cat.CategoryId = Convert.ToInt32(dr["CATEGORY_ID"]);
+                    cat.CategoryName = dr["CATEGORY_NAME"].ToString();
+                    cat.DateAdded = Convert.ToDateTime(dr["DATE_ADDED"]);
+                    resp.Categories.Add(cat);
+                }
+
+                resp.isSuccess = true;
+                resp.Message = "Categories retrieved successfully";
+                resp.TotalCount = resp.Categories.Count;
+            }
+            else
+            {
+                resp.isSuccess = true;
+                resp.Message = "No categories found";
+                resp.TotalCount = 0;
+            }
 
             return resp;
         }
@@ -2016,6 +2172,225 @@ namespace BaseCode.Models
             return resp;
         }
         // ---------------------------------------------------------------------------------------------------------
+
+        // WISHLIST FUNCTIONS -----------------------------------------------------------------------------------
+
+        private bool CheckWishlistExists(int buyerId, int productId)
+        {
+            string query = "SELECT COUNT(*) FROM WISHLIST WHERE BUYER_ID = " + buyerId + " AND PRODUCT_ID = " + productId;
+
+            using (MySqlConnection conn = GetConnection())
+            {
+                conn.Open();
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                conn.Close();
+                return count > 0;
+            }
+        }
+
+        private bool CheckWishlistOwnership(int wishlistId, int buyerId)
+        {
+            string query = "SELECT COUNT(*) FROM WISHLIST WHERE WISHLIST_ID = " + wishlistId + " AND BUYER_ID = " + buyerId;
+
+            using (MySqlConnection conn = GetConnection())
+            {
+                conn.Open();
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                conn.Close();
+                return count > 0;
+            }
+        }
+
+        // Add to Wishlist -----------------------------------------------------------------------------------------------------------
+        public AddToWishlistResponse AddToWishlist(AddToWishlistRequest r)
+        {
+            AddToWishlistResponse resp = new AddToWishlistResponse();
+            DateTime currentDate = DateTime.Now;
+            string dateAdded = currentDate.ToString("yyyy-MM-dd HH:mm:ss");
+
+            // Check if product exists
+            string checkProductQuery = "SELECT COUNT(*) FROM PRODUCTS WHERE PRODUCT_ID = " + r.ProductId;
+            using (MySqlConnection conn = GetConnection())
+            {
+                conn.Open();
+                MySqlCommand checkCmd = new MySqlCommand(checkProductQuery, conn);
+                int productCount = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                if (productCount == 0)
+                {
+                    resp.isSuccess = false;
+                    resp.Message = "Product not found";
+                    conn.Close();
+                    return resp;
+                }
+
+                // Check if already in wishlist
+                if (CheckWishlistExists(r.BuyerId, r.ProductId))
+                {
+                    resp.isSuccess = false;
+                    resp.Message = "Product already in wishlist";
+                    conn.Close();
+                    return resp;
+                }
+
+                string query = "INSERT INTO WISHLIST (BUYER_ID, PRODUCT_ID, DATE_ADDED) " +
+                               "VALUES (" + r.BuyerId + ", " + r.ProductId + ", '" + dateAdded + "')";
+
+                MySqlCommand cmd = new MySqlCommand(query, conn);
+                cmd.ExecuteNonQuery();
+
+                resp.isSuccess = true;
+                resp.Message = "Product added to wishlist successfully";
+                resp.WishlistId = (int)cmd.LastInsertedId;
+                resp.ProductId = r.ProductId;
+                resp.DateAdded = currentDate;
+
+                conn.Close();
+            }
+
+            return resp;
+        }
+
+        // Get Wishlist
+        public GetWishlistResponse GetWishlist(GetWishlistRequest r)
+        {
+            GetWishlistResponse resp = new GetWishlistResponse();
+            resp.WishlistItems = new List<WishlistItem>(); // Uses Tables.WishlistItem
+
+            string activeStatus = GetSettingsValue("ACTIVE");
+            string soldOutStatus = GetSettingsValue("SOLD_OUT");
+
+            string query = "SELECT w.WISHLIST_ID, w.PRODUCT_ID, w.DATE_ADDED, " +
+                           "p.PRODUCT_NAME, p.PRODUCT_DESCRIPTION, p.PRODUCT_PRICE, " +
+                           "p.PRODUCT_BRAND, p.PRODUCT_STATUS, p.PRODUCT_QUANTITY, " +
+                           "pc.CATEGORY_NAME, s.SELLER_ID, s.SELLER_STORE_NAME " +
+                           "FROM WISHLIST w " +
+                           "JOIN PRODUCTS p ON w.PRODUCT_ID = p.PRODUCT_ID " +
+                           "LEFT JOIN PRODUCT_CATEGORY pc ON p.CATEGORY_ID = pc.CATEGORY_ID " +
+                           "LEFT JOIN SELLERS s ON p.SELLER_ID = s.SELLER_ID " +
+                           "WHERE w.BUYER_ID = " + r.BuyerId + " " +
+                           "ORDER BY w.DATE_ADDED DESC";
+
+            GenericGetDataResponse getData = GetData(query);
+
+            if (getData.isSuccess && getData.Data.Rows.Count > 0)
+            {
+                foreach (DataRow dr in getData.Data.Rows)
+                {
+                    WishlistItem item = new WishlistItem();
+                    item.WishlistId = Convert.ToInt32(dr["WISHLIST_ID"]);
+                    item.ProductId = Convert.ToInt32(dr["PRODUCT_ID"]);
+                    item.ProductName = dr["PRODUCT_NAME"].ToString();
+                    item.ProductDescription = dr["PRODUCT_DESCRIPTION"].ToString();
+                    item.Price = Convert.ToDecimal(dr["PRODUCT_PRICE"]);
+                    item.Brand = dr["PRODUCT_BRAND"]?.ToString() ?? "";
+                    item.CategoryName = dr["CATEGORY_NAME"]?.ToString() ?? "";
+                    item.AvailableStock = Convert.ToInt32(dr["PRODUCT_QUANTITY"]);
+                    item.SellerId = dr["SELLER_ID"] != DBNull.Value ? Convert.ToInt32(dr["SELLER_ID"]) : 0;
+                    item.StoreName = dr["SELLER_STORE_NAME"]?.ToString() ?? "";
+                    item.DateAdded = Convert.ToDateTime(dr["DATE_ADDED"]);
+
+                    string productStatus = dr["PRODUCT_STATUS"].ToString();
+                    if (productStatus == activeStatus)
+                    {
+                        item.Status = "ACTIVE";
+                    }
+                    else if (productStatus == soldOutStatus)
+                    {
+                        item.Status = "SOLD OUT";
+                    }
+                    else
+                    {
+                        item.Status = "INACTIVE";
+                    }
+
+                    resp.WishlistItems.Add(item);
+                }
+
+                resp.TotalItems = resp.WishlistItems.Count;
+
+                if (r.Page.HasValue && r.PageSize.HasValue && r.Page.Value > 0 && r.PageSize.Value > 0)
+                {
+                    resp.TotalCount = resp.WishlistItems.Count;
+                    resp.CurrentPage = r.Page.Value;
+                    resp.PageSize = r.PageSize.Value;
+                    resp.TotalPages = (int)Math.Ceiling((double)resp.TotalCount / r.PageSize.Value);
+
+                    resp.WishlistItems = resp.WishlistItems
+                        .Skip((r.Page.Value - 1) * r.PageSize.Value)
+                        .Take(r.PageSize.Value)
+                        .ToList();
+                }
+                else
+                {
+                    resp.TotalCount = resp.WishlistItems.Count;
+                }
+
+                resp.isSuccess = true;
+                resp.Message = "Wishlist retrieved successfully";
+                resp.BuyerId = r.BuyerId;
+            }
+            else
+            {
+                resp.isSuccess = true;
+                resp.Message = "Wishlist is empty";
+                resp.TotalItems = 0;
+                resp.TotalCount = 0;
+                resp.BuyerId = r.BuyerId;
+            }
+
+            return resp;
+        }
+
+        // Remove from Wishlist -----------------------------------------------------------------------------------------------------------
+        public RemoveFromWishlistResponse RemoveFromWishlist(RemoveFromWishlistRequest r)
+        {
+            RemoveFromWishlistResponse resp = new RemoveFromWishlistResponse();
+            DateTime removalDate = DateTime.Now;
+
+            if (!CheckWishlistOwnership(r.WishlistId, r.BuyerId))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Wishlist item not found";
+                return resp;
+            }
+
+            string getProductQuery = "SELECT PRODUCT_ID FROM WISHLIST WHERE WISHLIST_ID = " + r.WishlistId;
+            GenericGetDataResponse productData = GetData(getProductQuery);
+            int productId = 0;
+            if (productData.Data.Rows.Count > 0)
+            {
+                productId = Convert.ToInt32(productData.Data.Rows[0]["PRODUCT_ID"]);
+            }
+
+            string query = "DELETE FROM WISHLIST WHERE WISHLIST_ID = " + r.WishlistId;
+
+            GenericInsertUpdateRequest genReq = new GenericInsertUpdateRequest();
+            genReq.query = query;
+            genReq.isInsert = false;
+            genReq.responseMessage = "Product removed from wishlist";
+            genReq.errorMessage = "Failed to remove from wishlist";
+
+            GenericInsertUpdateResponse genResp = InsertUpdateData(genReq);
+
+            resp.isSuccess = genResp.isSuccess;
+            resp.Message = genResp.Message;
+            resp.WishlistId = r.WishlistId;
+            resp.ProductId = productId;
+            resp.RemovalDate = removalDate;
+
+            return resp;
+        }
+
+        // -----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 
         // Reviews and Comments -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -1167,8 +1167,23 @@ namespace BaseCode.Controllers
 
 
 
+        // Get All Categories
+        [HttpGet("GetAllCategories")]
+        public IActionResult GetAllCategories()
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
 
+            GetAllCategoriesResponse resp = db.GetAllCategories();
 
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi("{}", responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
 
         // Add Product (Seller) ------------------------------------------------------------------------------------
         [HttpPost("AddProduct")]
@@ -1289,7 +1304,7 @@ namespace BaseCode.Controllers
                 string.IsNullOrEmpty(r.ProductDescription) &&
                 !r.Price.HasValue &&
                 !r.Quantity.HasValue &&
-                string.IsNullOrEmpty(r.Category) &&
+                !r.CategoryId.HasValue && 
                 string.IsNullOrEmpty(r.Brand))
             {
                 resp.Message = "Please provide at least one field to update";
@@ -1336,6 +1351,20 @@ namespace BaseCode.Controllers
                 string responseJsonError = JsonConvert.SerializeObject(resp);
                 LogApi(requestJson, responseJsonError, logTime);
                 return BadRequest(resp);
+            }
+
+            if (r.CategoryId.HasValue && r.CategoryId.Value > 0)
+            {
+                string checkCategoryQuery = "SELECT COUNT(*) FROM PRODUCT_CATEGORY WHERE CATEGORY_ID = " + r.CategoryId.Value;
+                GenericGetDataResponse checkData = db.GetData(checkCategoryQuery);
+                if (checkData.Data.Rows.Count == 0 || Convert.ToInt32(checkData.Data.Rows[0][0]) == 0)
+                {
+                    resp.isSuccess = false;
+                    resp.Message = "Invalid category ID";
+                    string responseJsonError = JsonConvert.SerializeObject(resp);
+                    LogApi(requestJson, responseJsonError, logTime);
+                    return BadRequest(resp);
+                }
             }
 
             resp = db.UpdateProduct(r);
@@ -1437,6 +1466,63 @@ namespace BaseCode.Controllers
         }
         // ----------------------------------------------------------------------------------------
 
+        // Get Seller Dashboard -----------------------------------------------------------------------------------
+        [HttpPost("GetSellerDashboard")]
+        public IActionResult GetSellerDashboard([FromBody] GetSellerDashboardRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            GetSellerDashboardResponse resp = new GetSellerDashboardResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.SellerId <= 0)
+            {
+                resp.Message = "Please provide Seller ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, "SELLER", activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid seller session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionSellerId = db.GetUserIdFromSession(r.SessionKey, "SELLER");
+            if (sessionSellerId != r.SellerId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "Session does not match seller ID";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.GetSellerDashboard(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+        // -----------------------------------------------------------------------------------------
+
+
         // Get Products By Category ---------------------------------------------------------------
         [HttpPost("GetProductsByCategory")]
         public IActionResult GetProductsByCategory([FromBody] GetProductByCategoryRequest r)
@@ -1533,6 +1619,185 @@ namespace BaseCode.Controllers
 
             string responseJsonSuccess = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJsonSuccess, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Add to Wishlist -----------------------------------------------------------------------------------
+        [HttpPost("AddToWishlist")]
+        public IActionResult AddToWishlist([FromBody] AddToWishlistRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            AddToWishlistResponse resp = new AddToWishlistResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.BuyerId <= 0)
+            {
+                resp.Message = "Please provide Buyer ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (r.ProductId <= 0)
+            {
+                resp.Message = "Please provide Product ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, "BUYER", activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid buyer session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionBuyerId = db.GetUserIdFromSession(r.SessionKey, "BUYER");
+            if (sessionBuyerId != r.BuyerId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "Session does not match buyer ID";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.AddToWishlist(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Get Wishlist -----------------------------------------------------------------------------------
+        [HttpPost("GetWishlist")]
+        public IActionResult GetWishlist([FromBody] GetWishlistRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            GetWishlistResponse resp = new GetWishlistResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.BuyerId <= 0)
+            {
+                resp.Message = "Please provide Buyer ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, "BUYER", activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid buyer session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionBuyerId = db.GetUserIdFromSession(r.SessionKey, "BUYER");
+            if (sessionBuyerId != r.BuyerId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "Session does not match buyer ID";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.GetWishlist(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Remove from Wishlist -----------------------------------------------------------------------------------
+        [HttpPost("RemoveFromWishlist")]
+        public IActionResult RemoveFromWishlist([FromBody] RemoveFromWishlistRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            RemoveFromWishlistResponse resp = new RemoveFromWishlistResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.BuyerId <= 0)
+            {
+                resp.Message = "Please provide Buyer ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (string.IsNullOrEmpty(r.SessionKey))
+            {
+                resp.Message = "Please provide Session Key";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            if (r.WishlistId <= 0)
+            {
+                resp.Message = "Please provide Wishlist ID";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            string activeStatus = db.GetSettingsValue("ACTIVE");
+            if (!db.CheckSessionActive(r.SessionKey, "BUYER", activeStatus))
+            {
+                resp.isSuccess = false;
+                resp.Message = "Invalid buyer session. Please login again.";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            int sessionBuyerId = db.GetUserIdFromSession(r.SessionKey, "BUYER");
+            if (sessionBuyerId != r.BuyerId)
+            {
+                resp.isSuccess = false;
+                resp.Message = "Session does not match buyer ID";
+                string responseJsonError = JsonConvert.SerializeObject(resp);
+                LogApi(requestJson, responseJsonError, logTime);
+                return Unauthorized(resp);
+            }
+
+            resp = db.RemoveFromWishlist(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
 
             if (resp.isSuccess)
                 return Ok(resp);
