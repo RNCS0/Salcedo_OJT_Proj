@@ -1626,6 +1626,61 @@ namespace BaseCode.Controllers
                 return BadRequest(resp);
         }
 
+        // Search Seller -------------------------------------------------
+        [HttpPost("SearchSeller")]
+        public IActionResult SearchSeller([FromBody] SearchSellerRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            SearchSellerResponse resp = new SearchSellerResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (string.IsNullOrEmpty(r.Keyword) && !r.ShowAll)
+            {
+                resp.isSuccess = false;
+                resp.Message = "Please provide keyword or set ShowAll to true";
+                LogApi(requestJson, resp.Message, logTime);
+                return BadRequest(resp);
+            }
+
+            resp = db.SearchSeller(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
+        // Get Popular Products -------------------------------------------------
+        [HttpPost("GetPopularProducts")]
+        public IActionResult GetPopularProducts([FromBody] GetPopularProductsRequest r)
+        {
+            DateTime apiCallTime = DateTime.Now;
+            string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            GetPopularProductsResponse resp = new GetPopularProductsResponse();
+            string requestJson = JsonConvert.SerializeObject(r);
+
+            if (r.Limit <= 0)
+            {
+                r.Limit = 10;
+            }
+
+            resp = db.GetPopularProducts(r);
+
+            string responseJson = JsonConvert.SerializeObject(resp);
+            LogApi(requestJson, responseJson, logTime);
+
+            if (resp.isSuccess)
+                return Ok(resp);
+            else
+                return BadRequest(resp);
+        }
+
         // Add to Wishlist -----------------------------------------------------------------------------------
         [HttpPost("AddToWishlist")]
         public IActionResult AddToWishlist([FromBody] AddToWishlistRequest r)
