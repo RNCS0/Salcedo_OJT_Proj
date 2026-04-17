@@ -1,6 +1,8 @@
 ﻿using BaseCode.Models;
 using BaseCode.Models.Requests;
 using BaseCode.Models.Responses;
+using BaseCode.Services;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,9 +25,10 @@ namespace BaseCode.Controllers
     [Route("[controller]")]
     public class BaseCodeController : Controller
     {
-        private DBContext db;
+        private readonly DBContext db;
         private readonly IWebHostEnvironment hostingEnvironment;
         private IHttpContextAccessor _IPAccess;
+        private readonly WalletConsumerService _walletService;
 
 
         private static readonly string[] Summaries = new[]
@@ -48,11 +51,12 @@ namespace BaseCode.Controllers
             return db.LogAPI(logRequest);
         }
 
-        public BaseCodeController(DBContext context, IWebHostEnvironment environment, IHttpContextAccessor accessor)
+        public BaseCodeController(DBContext context, IWebHostEnvironment environment, IHttpContextAccessor accessor, WalletConsumerService walletService)
         {
             _IPAccess = accessor;
             db = context;
             hostingEnvironment = environment;
+            _walletService = walletService; 
         }
 
         [HttpGet]
@@ -2673,7 +2677,7 @@ namespace BaseCode.Controllers
 
         // Request Wallet Code
         [HttpPost("RequestWalletCode")]
-        public IActionResult RequestWalletCode([FromBody] RequestWalletCodeRequest r)
+        public async Task<IActionResult> RequestWalletCode([FromBody] RequestWalletCodeRequest r)
         {
             DateTime apiCallTime = DateTime.Now;
             string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
@@ -2729,7 +2733,7 @@ namespace BaseCode.Controllers
                 return Unauthorized(resp);
             }
 
-            resp = db.RequestWalletCode(r);
+            resp = await _walletService.RequestWalletCodeAsync(r);
 
             string responseJson = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJson, logTime);
@@ -2742,7 +2746,7 @@ namespace BaseCode.Controllers
 
         // Create Wallet 
         [HttpPost("CreateWallet")]
-        public IActionResult CreateWallet([FromBody] CreateWalletRequest r)
+        public async Task<IActionResult> CreateWallet([FromBody] CreateWalletRequest r)
         {
             DateTime apiCallTime = DateTime.Now;
             string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
@@ -2805,7 +2809,7 @@ namespace BaseCode.Controllers
                 return Unauthorized(resp);
             }
 
-            resp = db.CreateWallet(r);
+            resp = await _walletService.CreateWalletAsync(r);
 
             string responseJson = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJson, logTime);
@@ -2818,7 +2822,7 @@ namespace BaseCode.Controllers
 
         // Deposit to Wallet
         [HttpPost("DepositToWallet")]
-        public IActionResult DepositToWallet([FromBody] WalletDepositRequest r)
+        public async Task<IActionResult> DepositToWallet([FromBody] WalletDepositRequest r)
         {
             DateTime apiCallTime = DateTime.Now;
             string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
@@ -2874,7 +2878,7 @@ namespace BaseCode.Controllers
                 return Unauthorized(resp);
             }
 
-            resp = db.DepositToWallet(r);
+            resp = await _walletService.DepositToWalletAsync(r);
 
             string responseJson = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJson, logTime);
@@ -2887,7 +2891,7 @@ namespace BaseCode.Controllers
 
         // Withdraw from Wallet
         [HttpPost("WithdrawFromWallet")]
-        public IActionResult WithdrawFromWallet([FromBody] WalletWithdrawRequest r)
+        public async Task<IActionResult> WithdrawFromWallet([FromBody] WalletWithdrawRequest r)
         {
             DateTime apiCallTime = DateTime.Now;
             string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
@@ -2943,7 +2947,7 @@ namespace BaseCode.Controllers
                 return Unauthorized(resp);
             }
 
-            resp = db.WithdrawFromWallet(r);
+            resp = await _walletService.WithdrawFromWalletAsync(r);
 
             string responseJson = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJson, logTime);
@@ -2956,7 +2960,7 @@ namespace BaseCode.Controllers
 
         // Get Wallet Balance
         [HttpPost("GetWalletBalance")]
-        public IActionResult GetWalletBalance([FromBody] GetWalletBalanceRequest r)
+        public async Task<IActionResult> GetWalletBalance([FromBody] GetWalletBalanceRequest r)
         {
             DateTime apiCallTime = DateTime.Now;
             string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
@@ -3005,7 +3009,7 @@ namespace BaseCode.Controllers
                 return Unauthorized(resp);
             }
 
-            resp = db.GetWalletBalance(r);
+            resp = await _walletService.GetWalletBalanceAsync(r);
 
             string responseJson = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJson, logTime);
@@ -3018,7 +3022,7 @@ namespace BaseCode.Controllers
 
         // Get Wallet Transactions
         [HttpPost("GetWalletTransactions")]
-        public IActionResult GetWalletTransactions([FromBody] GetWalletTransactionsRequest r)
+        public async Task<IActionResult> GetWalletTransactions([FromBody] GetWalletTransactionsRequest r)
         {
             DateTime apiCallTime = DateTime.Now;
             string logTime = apiCallTime.ToString("yyyy-MM-dd HH:mm:ss");
@@ -3067,7 +3071,7 @@ namespace BaseCode.Controllers
                 return Unauthorized(resp);
             }
 
-            resp = db.GetWalletTransactions(r);
+            resp = await _walletService.GetWalletTransactionsAsync(r);
 
             string responseJson = JsonConvert.SerializeObject(resp);
             LogApi(requestJson, responseJson, logTime);

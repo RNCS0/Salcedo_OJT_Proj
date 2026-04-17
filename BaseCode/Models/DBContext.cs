@@ -2521,7 +2521,161 @@ namespace BaseCode.Models
 
             return resp;
         }
+        // Get Popular Products --------------------------------------
+        // Get Popular Products
+        public GetPopularProductsResponse GetPopularProducts(GetPopularProductsRequest r)
+        {
+            GetPopularProductsResponse resp = new GetPopularProductsResponse();
+            resp.Products = new List<PopularProductItem>();
 
+            string activeStatus = GetSettingsValue("ACTIVE");
+            string soldOutStatus = GetSettingsValue("SOLD_OUT");
+            int limit = r.Limit > 0 ? r.Limit : 10;
+
+            string query = "SELECT p.PRODUCT_ID, p.SELLER_ID, p.PRODUCT_NAME, p.PRODUCT_DESCRIPTION, " +
+                           "p.PRODUCT_PRICE, p.PRODUCT_QUANTITY, p.PRODUCT_BRAND, p.PRODUCT_STATUS, " +
+                           "pc.CATEGORY_NAME, s.SELLER_STORE_NAME, " +
+                           "COALESCE(SUM(oi.QUANTITY), 0) as TOTAL_SOLD, " +
+                           "COALESCE(AVG(pr.RATING), 0) as AVG_RATING, " +
+                           "COALESCE(COUNT(DISTINCT pr.REVIEW_ID), 0) as TOTAL_REVIEWS " +
+                           "FROM PRODUCTS p " +
+                           "LEFT JOIN PRODUCT_CATEGORY pc ON p.CATEGORY_ID = pc.CATEGORY_ID " +
+                           "LEFT JOIN SELLERS s ON p.SELLER_ID = s.SELLER_ID " +
+                           "LEFT JOIN ORDER_ITEMS oi ON p.PRODUCT_ID = oi.PRODUCT_ID " +
+                           "LEFT JOIN ORDERS o ON oi.ORDER_ID = o.ORDER_ID AND o.ORDER_STATUS = 'COMPLETED' " +
+                           "LEFT JOIN PRODUCT_REVIEWS pr ON p.PRODUCT_ID = pr.PRODUCT_ID " +
+                           "WHERE p.PRODUCT_STATUS IN ('" + activeStatus + "', '" + soldOutStatus + "')";
+
+            if (r.CategoryId.HasValue && r.CategoryId.Value > 0)
+            {
+                query += " AND p.CATEGORY_ID = " + r.CategoryId.Value;
+            }
+
+            query += " GROUP BY p.PRODUCT_ID, p.SELLER_ID, p.PRODUCT_NAME, p.PRODUCT_DESCRIPTION, " +
+                     "p.PRODUCT_PRICE, p.PRODUCT_QUANTITY, p.PRODUCT_BRAND, p.PRODUCT_STATUS, " +
+                     "pc.CATEGORY_NAME, s.SELLER_STORE_NAME " +
+                     "ORDER BY TOTAL_SOLD DESC, AVG_RATING DESC " +
+                     "LIMIT " + limit;
+
+            GenericGetDataResponse getData = GetData(query);
+
+            if (getData.isSuccess && getData.Data.Rows.Count > 0)
+            {
+                foreach (DataRow dr in getData.Data.Rows)
+                {
+                    PopularProductItem item = new PopularProductItem();
+                    item.ProductId = Convert.ToInt32(dr["PRODUCT_ID"]);
+                    item.SellerId = Convert.ToInt32(dr["SELLER_ID"]);
+                    item.ProductName = dr["PRODUCT_NAME"].ToString();
+                    item.ProductDescription = dr["PRODUCT_DESCRIPTION"].ToString();
+                    item.Price = Convert.ToDecimal(dr["PRODUCT_PRICE"]);
+                    item.Quantity = Convert.ToInt32(dr["PRODUCT_QUANTITY"]);
+                    item.Brand = dr["PRODUCT_BRAND"]?.ToString() ?? "";
+                    item.CategoryName = dr["CATEGORY_NAME"]?.ToString() ?? "";
+                    item.StoreName = dr["SELLER_STORE_NAME"]?.ToString() ?? "";
+                    item.TotalSold = Convert.ToInt32(dr["TOTAL_SOLD"]);
+                    item.AverageRating = Convert.ToDouble(dr["AVG_RATING"]);
+                    item.TotalReviews = Convert.ToInt32(dr["TOTAL_REVIEWS"]);
+
+                    string productStatus = dr["PRODUCT_STATUS"].ToString();
+                    if (productStatus == activeStatus)
+                        item.Status = "ACTIVE";
+                    else if (productStatus == soldOutStatus)
+                        item.Status = "SOLD OUT";
+                    else
+                        item.Status = "INACTIVE";
+
+                    resp.Products.Add(item);
+                }
+
+                resp.isSuccess = true;
+                resp.Message = "Popular products retrieved successfully";
+                resp.TotalCount = resp.Products.Count;
+            }
+            else
+            {
+                resp.isSuccess = true;
+                resp.Message = "No popular products found";
+                resp.TotalCount = 0;
+            }
+
+            return resp;
+        }
+        // Search Seller ---------------------------------------------
+        public SearchSellerResponse SearchSeller(SearchSellerRequest r)
+        {
+            SearchSellerResponse resp = new SearchSellerResponse();
+            resp.Sellers = new List<SellerSearchItem>();
+
+            string activeStatus = GetSettingsValue("ACTIVE");
+            string searchKeyword = string.IsNullOrEmpty(r.Keyword) ? "" : "%" + r.Keyword.Replace("'", "''") + "%";
+
+            string query = "SELECT SELLER_ID, SELLER_FIRST_NAME, SELLER_LAST_NAME, " +
+                           "SELLER_USERNAME, SELLER_EMAIL, SELLER_CONTACT_NO, " +
+                           "SELLER_STORE_NAME, SELLER_STATUS, DATE_ADDED " +
+                           "FROM SELLERS WHERE 1=1";
+
+            if (r.Status == "ACTIVE")
+            {
+                query += " AND SELLER_STATUS = '" + activeStatus + "'";
+            }
+            else if (r.Status != "ALL" && !string.IsNullOrEmpty(r.Status))
+            {
+                query += " AND SELLER_STATUS = '" + r.Status + "'";
+            }
+
+            if (!string.IsNullOrEmpty(r.Keyword))
+            {
+                query += " AND (SELLER_STORE_NAME LIKE '" + searchKeyword + "'" +
+                         " OR SELLER_FIRST_NAME LIKE '" + searchKeyword + "'" +
+                         " OR SELLER_LAST_NAME LIKE '" + searchKeyword + "'" +
+                         " OR SELLER_USERNAME LIKE '" + searchKeyword + "')";
+            }
+
+            query += " ORDER BY SELLER_STORE_NAME ASC";
+
+            GenericGetDataResponse getData = GetData(query);
+
+            if (getData.isSuccess && getData.Data.Rows.Count > 0)
+            {
+                foreach (DataRow dr in getData.Data.Rows)
+                {
+                    SellerSearchItem seller = new SellerSearchItem();
+                    seller.SellerId = Convert.ToInt32(dr["SELLER_ID"]);
+                    seller.FirstName = dr["SELLER_FIRST_NAME"]?.ToString() ?? "";
+                    seller.LastName = dr["SELLER_LAST_NAME"]?.ToString() ?? "";
+                    seller.UserName = dr["SELLER_USERNAME"]?.ToString() ?? "";
+                    seller.Email = dr["SELLER_EMAIL"]?.ToString() ?? "";
+                    seller.ContactNo = dr["SELLER_CONTACT_NO"]?.ToString() ?? "";
+                    seller.StoreName = dr["SELLER_STORE_NAME"]?.ToString() ?? "";
+                    seller.Status = dr["SELLER_STATUS"]?.ToString() ?? "";
+                    seller.DateRegistered = Convert.ToDateTime(dr["DATE_ADDED"]);
+
+                    // Get product count
+                    string productCountQuery = "SELECT COUNT(*) FROM PRODUCTS WHERE SELLER_ID = " + seller.SellerId +
+                                              " AND PRODUCT_STATUS = '" + activeStatus + "'";
+                    GenericGetDataResponse productCountData = GetData(productCountQuery);
+                    seller.TotalProducts = (productCountData.isSuccess && productCountData.Data.Rows.Count > 0)
+                        ? Convert.ToInt32(productCountData.Data.Rows[0][0]) : 0;
+
+                    resp.Sellers.Add(seller);
+                }
+
+                resp.TotalCount = resp.Sellers.Count;
+                resp.isSuccess = true;
+                resp.Message = "Sellers retrieved successfully";
+            }
+            else
+            {
+                resp.isSuccess = true;
+                resp.Message = "No sellers found";
+                resp.TotalCount = 0;
+            }
+
+            return resp;
+        }
+
+        // 
         // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -3223,526 +3377,7 @@ namespace BaseCode.Models
 
         // --------------------------------------------------------------------------------------------------------------------------------------------
 
-        // E-WALLET FUNCTIONS ------------------------------------------------------------------------------------------------------------------------
-
-        private void SendWalletVerificationEmail(string toEmail, string firstName, string verificationCode)
-        {
-            try
-            {
-                using (MailMessage mail = new MailMessage())
-                {
-                    mail.From = new MailAddress("neilsalcedo29@gmail.com", "E-Wallet Registration");
-                    mail.To.Add(toEmail);
-                    mail.Subject = "Wallet Verification Code";
-
-                    mail.Body = $"Hello {firstName},<br><br>" +
-                               $"You have requested to create an e-wallet for your account.<br><br>" +
-                               $"<strong>Your verification code is: {verificationCode}</strong><br><br>" +
-                               $"This code will expire in 10 minutes.<br>" +
-                               $"Please enter this code to create your wallet.<br><br>" +
-                               $"If you did not request this, please ignore this email.<br><br>" +
-                               $"Thank you!";
-
-                    mail.IsBodyHtml = true;
-
-                    using (SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587))
-                    {
-                        smtp.Credentials = new NetworkCredential("neilsalcedo29@gmail.com", "fnjf zcnd wnkg naua");
-                        smtp.EnableSsl = true;
-                        smtp.Send(mail);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Email sending failed: {ex.Message}");
-            }
-        }
-
-        // Get Wallet Balance
-        private decimal GetWalletBalance(int userId, string userType)
-        {
-            string query = "SELECT BALANCE FROM WALLETS WHERE USER_ID = " + userId +
-                           " AND USER_TYPE = '" + userType + "' AND STATUS = '" + GetSettingsValue("ACTIVE") + "'";
-
-            GenericGetDataResponse getData = GetData(query);
-
-            if (getData.isSuccess && getData.Data.Rows.Count > 0)
-            {
-                return Convert.ToDecimal(getData.Data.Rows[0]["BALANCE"]);
-            }
-
-            return 0;
-        }
-
-        // Update Wallet Balance
-        private bool UpdateWalletBalance(int walletId, decimal newBalance)
-        {
-            DateTime currentDate = DateTime.Now;
-            string dateUpdated = currentDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-            string query = "UPDATE WALLETS SET BALANCE = " + newBalance +
-                           ", DATE_UPDATED = '" + dateUpdated +
-                           "' WHERE WALLET_ID = " + walletId;
-
-            GenericInsertUpdateRequest genReq = new GenericInsertUpdateRequest();
-            genReq.query = query;
-            genReq.isInsert = false;
-            genReq.responseMessage = "Balance updated";
-            genReq.errorMessage = "Failed to update balance";
-
-            GenericInsertUpdateResponse genResp = InsertUpdateData(genReq);
-
-            return genResp.isSuccess;
-        }
-
-        // Add Transaction Record
-        private bool AddTransaction(int userId, string userType, string transactionType,
-            decimal amount, decimal balanceBefore, decimal balanceAfter, string remarks)
-        {
-            DateTime currentDate = DateTime.Now;
-            string transactionDate = currentDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-            string query = "INSERT INTO WALLET_TRANSACTIONS (USER_ID, USER_TYPE, TRANSACTION_TYPE, " +
-                           "AMOUNT, BALANCE_BEFORE, BALANCE_AFTER, REMARKS, TRANSACTION_DATE) VALUES (" +
-                           userId + ", '" + userType + "', '" + transactionType + "', " +
-                           amount + ", " + balanceBefore + ", " + balanceAfter + ", '" +
-                           (remarks ?? "").Replace("'", "''") + "', '" + transactionDate + "')";
-
-            GenericInsertUpdateRequest genReq = new GenericInsertUpdateRequest();
-            genReq.query = query;
-            genReq.isInsert = true;
-            genReq.responseMessage = "Transaction recorded";
-            genReq.errorMessage = "Failed to record transaction";
-
-            GenericInsertUpdateResponse genResp = InsertUpdateData(genReq);
-
-            return genResp.isSuccess;
-        }
-
-
-        //E-Wallet APIs ---------------------------------------------------------------------------------------------------------------------------------------
-
-        // Request Wallet Code
-        public RequestWalletCodeResponse RequestWalletCode(RequestWalletCodeRequest r)
-        {
-            RequestWalletCodeResponse resp = new RequestWalletCodeResponse();
-            string activeStatus = GetSettingsValue("ACTIVE");
-            string checkUserQuery = "";
-            if (r.UserType.ToUpper() == "SELLER")
-            {
-                checkUserQuery = "SELECT SELLER_ID, SELLER_EMAIL, SELLER_FIRST_NAME FROM SELLERS WHERE SELLER_ID = " + r.UserId +
-                                " AND SELLER_EMAIL = '" + r.Email.Replace("'", "''") + "' AND SELLER_STATUS = '" + activeStatus + "'";
-            }
-            else if (r.UserType.ToUpper() == "BUYER")
-            {
-                checkUserQuery = "SELECT BUYER_ID, BUYER_EMAIL, BUYER_FIRST_NAME FROM BUYERS WHERE BUYER_ID = " + r.UserId +
-                                " AND BUYER_EMAIL = '" + r.Email.Replace("'", "''") + "' AND BUYER_STATUS = '" + activeStatus + "'";
-            }
-            else
-            {
-                resp.isSuccess = false;
-                resp.Message = "Invalid user type";
-                return resp;
-            }
-
-            GenericGetDataResponse userData = GetData(checkUserQuery);
-
-            if (!userData.isSuccess || userData.Data.Rows.Count == 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "User not found or email does not match";
-                return resp;
-            }
-            string checkWalletQuery = "SELECT WALLET_ID FROM WALLETS WHERE USER_ID = " + r.UserId +
-                                     " AND USER_TYPE = '" + r.UserType + "'";
-
-            GenericGetDataResponse walletData = GetData(checkWalletQuery);
-
-            if (walletData.isSuccess && walletData.Data.Rows.Count > 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "Wallet already exists for this user";
-                return resp;
-            }
-
-            string inactiveStatus = GetSettingsValue("INACTIVE");
-            string deactivateQuery = "UPDATE WALLET_CODES SET STATUS = '" + inactiveStatus +
-                                    "' WHERE USER_ID = " + r.UserId + " AND USER_TYPE = '" + r.UserType +
-                                    "' AND STATUS = '" + activeStatus + "'";
-
-            GenericInsertUpdateRequest deactivateReq = new GenericInsertUpdateRequest();
-            deactivateReq.query = deactivateQuery;
-            deactivateReq.isInsert = false;
-            InsertUpdateData(deactivateReq);
-
-
-            string verificationCode = new Random().Next(100000, 999999).ToString();
-            DateTime currentDate = DateTime.Now;
-            string dateCreated = currentDate.ToString("yyyy-MM-dd HH:mm:ss");
-            string expiryDate = currentDate.AddMinutes(10).ToString("yyyy-MM-dd HH:mm:ss");
-
-            string insertQuery = "INSERT INTO WALLET_CODES (USER_ID, USER_TYPE, EMAIL, VERIFICATION_CODE, " +
-                                "EXPIRY_DATE, STATUS, DATE_CREATED) VALUES (" +
-                                r.UserId + ", '" + r.UserType + "', '" + r.Email.Replace("'", "''") + "', '" +
-                                verificationCode + "', '" + expiryDate + "', '" + activeStatus + "', '" + dateCreated + "')";
-
-            GenericInsertUpdateRequest genReq = new GenericInsertUpdateRequest();
-            genReq.query = insertQuery;
-            genReq.isInsert = true;
-            genReq.responseMessage = "Verification code sent";
-            genReq.errorMessage = "Failed to generate code";
-
-            GenericInsertUpdateResponse genResp = InsertUpdateData(genReq);
-
-            if (genResp.isSuccess)
-            {
-                string firstName = userData.Data.Rows[0][2].ToString();
-                SendWalletVerificationEmail(r.Email, firstName, verificationCode);
-
-                resp.isSuccess = true;
-                resp.Message = "Verification code sent to your email";
-                resp.VerificationCode = verificationCode;
-            }
-            else
-            {
-                resp.isSuccess = false;
-                resp.Message = "Failed to generate verification code";
-            }
-
-            return resp;
-        }
-
-        // Create Wallet
-        public CreateWalletResponse CreateWallet(CreateWalletRequest r)
-        {
-            CreateWalletResponse resp = new CreateWalletResponse();
-            string activeStatus = GetSettingsValue("ACTIVE");
-            DateTime currentDate = DateTime.Now;
-            string dateCreated = currentDate.ToString("yyyy-MM-dd HH:mm:ss");
-
-            string checkWalletQuery = "SELECT WALLET_ID FROM WALLETS WHERE USER_ID = " + r.UserId +
-                                     " AND USER_TYPE = '" + r.UserType + "'";
-
-            GenericGetDataResponse existingWallet = GetData(checkWalletQuery);
-
-            if (existingWallet.isSuccess && existingWallet.Data.Rows.Count > 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "Wallet already exists for this user";
-                return resp;
-            }
-
-            string verifyQuery = "SELECT WALLET_CODE_ID FROM WALLET_CODES WHERE USER_ID = " + r.UserId +
-                                " AND USER_TYPE = '" + r.UserType + "' AND EMAIL = '" + r.Email.Replace("'", "''") +
-                                "' AND VERIFICATION_CODE = '" + r.VerificationCode + "' AND STATUS = '" + activeStatus +
-                                "' AND EXPIRY_DATE > NOW()";
-
-            GenericGetDataResponse verifyData = GetData(verifyQuery);
-
-            if (!verifyData.isSuccess || verifyData.Data.Rows.Count == 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "Invalid or expired verification code";
-                return resp;
-            }
-
-            int walletCodeId = Convert.ToInt32(verifyData.Data.Rows[0]["WALLET_CODE_ID"]);
-            string insertWalletQuery = "INSERT INTO WALLETS (USER_ID, USER_TYPE, BALANCE, STATUS, DATE_CREATED) " +
-                                      "VALUES (" + r.UserId + ", '" + r.UserType + "', 0, '" + activeStatus + "', '" + dateCreated + "')";
-
-            GenericInsertUpdateRequest genReq = new GenericInsertUpdateRequest();
-            genReq.query = insertWalletQuery;
-            genReq.isInsert = true;
-            genReq.responseMessage = "Wallet created successfully";
-            genReq.errorMessage = "Failed to create wallet";
-
-            GenericInsertUpdateResponse genResp = InsertUpdateData(genReq);
-
-            if (genResp.isSuccess)
-            {
-                string usedStatus = GetSettingsValue("USED");
-                string updateCodeQuery = "UPDATE WALLET_CODES SET STATUS = '" + usedStatus +
-                                        "', DATE_USED = '" + dateCreated + "' WHERE WALLET_CODE_ID = " + walletCodeId;
-
-                GenericInsertUpdateRequest updateReq = new GenericInsertUpdateRequest();
-                updateReq.query = updateCodeQuery;
-                updateReq.isInsert = false;
-                InsertUpdateData(updateReq);
-
-                resp.isSuccess = true;
-                resp.Message = "Wallet created successfully!";
-                resp.WalletId = genResp.Id;
-                resp.Balance = 0;
-                resp.DateCreated = currentDate;
-            }
-            else
-            {
-                resp.isSuccess = false;
-                resp.Message = genResp.Message;
-            }
-
-            return resp;
-        }
-
-
-
-
-        // Deposit to Wallet
-        public WalletDepositResponse DepositToWallet(WalletDepositRequest r)
-        {
-            WalletDepositResponse resp = new WalletDepositResponse();
-
-            if (r.Amount <= 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "Deposit amount must be greater than 0";
-                return resp;
-            }
-
-            // Check if wallet exists
-            string checkWalletQuery = "SELECT WALLET_ID, BALANCE FROM WALLETS WHERE USER_ID = " + r.UserId +
-                                     " AND USER_TYPE = '" + r.UserType + "' AND STATUS = '" + GetSettingsValue("ACTIVE") + "'";
-
-            GenericGetDataResponse walletData = GetData(checkWalletQuery);
-
-            if (!walletData.isSuccess || walletData.Data.Rows.Count == 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "No wallet found. Please create a wallet first.";
-                return resp;
-            }
-
-            int walletId = Convert.ToInt32(walletData.Data.Rows[0]["WALLET_ID"]);
-            decimal balanceBefore = Convert.ToDecimal(walletData.Data.Rows[0]["BALANCE"]);
-            decimal balanceAfter = balanceBefore + r.Amount;
-
-            if (UpdateWalletBalance(walletId, balanceAfter))
-            {
-                if (AddTransaction(r.UserId, r.UserType, "DEPOSIT", r.Amount, balanceBefore, balanceAfter, r.ReferenceNumber))
-                {
-                    resp.isSuccess = true;
-                    resp.Message = "Deposit successful!";
-                    resp.NewBalance = balanceAfter;
-                    resp.AmountDeposited = r.Amount;
-                    resp.TransactionDate = DateTime.Now;
-                }
-                else
-                {
-                    UpdateWalletBalance(walletId, balanceBefore);
-                    resp.isSuccess = false;
-                    resp.Message = "Failed to record transaction";
-                }
-            }
-            else
-            {
-                resp.isSuccess = false;
-                resp.Message = "Failed to update balance";
-            }
-
-            return resp;
-        }
-
-
-        // Withdraw from Wallet
-        public WalletWithdrawResponse WithdrawFromWallet(WalletWithdrawRequest r)
-        {
-            WalletWithdrawResponse resp = new WalletWithdrawResponse();
-
-            if (r.Amount <= 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "Withdrawal amount must be greater than 0";
-                return resp;
-            }
-
-            // Check if wallet exists and get balance
-            string checkWalletQuery = "SELECT WALLET_ID, BALANCE FROM WALLETS WHERE USER_ID = " + r.UserId +
-                                     " AND USER_TYPE = '" + r.UserType + "' AND STATUS = '" + GetSettingsValue("ACTIVE") + "'";
-
-            GenericGetDataResponse walletData = GetData(checkWalletQuery);
-
-            if (!walletData.isSuccess || walletData.Data.Rows.Count == 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "No wallet found. Please create a wallet first.";
-                return resp;
-            }
-
-            int walletId = Convert.ToInt32(walletData.Data.Rows[0]["WALLET_ID"]);
-            decimal balanceBefore = Convert.ToDecimal(walletData.Data.Rows[0]["BALANCE"]);
-
-            if (balanceBefore < r.Amount)
-            {
-                resp.isSuccess = false;
-                resp.Message = "Insufficient balance";
-                return resp;
-            }
-
-            decimal balanceAfter = balanceBefore - r.Amount;
-
-            if (UpdateWalletBalance(walletId, balanceAfter))
-            {
-                string remarks = "Withdrawal request";
-
-                if (AddTransaction(r.UserId, r.UserType, "WITHDRAWAL", r.Amount, balanceBefore, balanceAfter, remarks))
-                {
-                    resp.isSuccess = true;
-                    resp.Message = "Withdrawal successful!";
-                    resp.NewBalance = balanceAfter;
-                    resp.AmountWithdrawn = r.Amount;
-                    resp.TransactionDate = DateTime.Now;
-                }
-                else
-                {
-                    UpdateWalletBalance(walletId, balanceBefore);
-                    resp.isSuccess = false;
-                    resp.Message = "Failed to record transaction";
-                }
-            }
-            else
-            {
-                resp.isSuccess = false;
-                resp.Message = "Failed to update balance";
-            }
-
-            return resp;
-        }
-
-        // Get Wallet Balance
-        public GetWalletBalanceResponse GetWalletBalance(GetWalletBalanceRequest r)
-        {
-            GetWalletBalanceResponse resp = new GetWalletBalanceResponse();
-
-            string checkWalletQuery = "SELECT BALANCE FROM WALLETS WHERE USER_ID = " + r.UserId +
-                                     " AND USER_TYPE = '" + r.UserType + "' AND STATUS = '" + GetSettingsValue("ACTIVE") + "'";
-
-            GenericGetDataResponse walletData = GetData(checkWalletQuery);
-
-            decimal balance = 0;
-            bool walletExists = walletData.isSuccess && walletData.Data.Rows.Count > 0;
-
-            if (walletExists)
-            {
-                balance = Convert.ToDecimal(walletData.Data.Rows[0]["BALANCE"]);
-            }
-
-            string userName = "";
-            if (r.UserType.ToUpper() == "SELLER")
-            {
-                string nameQuery = "SELECT SELLER_USERNAME FROM SELLERS WHERE SELLER_ID = " + r.UserId;
-                GenericGetDataResponse nameData = GetData(nameQuery);
-                if (nameData.isSuccess && nameData.Data.Rows.Count > 0)
-                    userName = nameData.Data.Rows[0][0].ToString();
-            }
-            else if (r.UserType.ToUpper() == "BUYER")
-            {
-                string nameQuery = "SELECT BUYER_USERNAME FROM BUYERS WHERE BUYER_ID = " + r.UserId;
-                GenericGetDataResponse nameData = GetData(nameQuery);
-                if (nameData.isSuccess && nameData.Data.Rows.Count > 0)
-                    userName = nameData.Data.Rows[0][0].ToString();
-            }
-
-            resp.isSuccess = true;
-            resp.Message = walletExists ? "Balance retrieved successfully" : "No wallet found. Please create a wallet first.";
-            resp.UserId = r.UserId;
-            resp.UserType = r.UserType;
-            resp.UserName = userName;
-            resp.Balance = balance;
-            resp.LastUpdated = DateTime.Now;
-
-            return resp;
-        }
-
-        // Get Wallet Transactions
-        public GetWalletTransactionsResponse GetWalletTransactions(GetWalletTransactionsRequest r)
-        {
-            GetWalletTransactionsResponse resp = new GetWalletTransactionsResponse();
-            resp.Transactions = new List<WalletTransactionItem>();
-
-            string checkWalletQuery = "SELECT BALANCE FROM WALLETS WHERE USER_ID = " + r.UserId +
-                                     " AND USER_TYPE = '" + r.UserType + "' AND STATUS = '" + GetSettingsValue("ACTIVE") + "'";
-
-            GenericGetDataResponse walletData = GetData(checkWalletQuery);
-
-            if (!walletData.isSuccess || walletData.Data.Rows.Count == 0)
-            {
-                resp.isSuccess = false;
-                resp.Message = "No wallet found. Please create a wallet first.";
-                resp.CurrentBalance = 0;
-                return resp;
-            }
-
-            resp.CurrentBalance = Convert.ToDecimal(walletData.Data.Rows[0]["BALANCE"]);
-
-            string query = "SELECT TRANSACTION_ID, TRANSACTION_TYPE, AMOUNT, BALANCE_BEFORE, " +
-                           "BALANCE_AFTER, REMARKS, TRANSACTION_DATE " +
-                           "FROM WALLET_TRANSACTIONS WHERE USER_ID = " + r.UserId +
-                           " AND USER_TYPE = '" + r.UserType + "'";
-
-            if (!string.IsNullOrEmpty(r.TransactionType))
-            {
-                query += " AND TRANSACTION_TYPE = '" + r.TransactionType + "'";
-            }
-
-            if (r.DateFrom.HasValue)
-            {
-                string dateFrom = r.DateFrom.Value.ToString("yyyy-MM-dd HH:mm:ss");
-                query += " AND TRANSACTION_DATE >= '" + dateFrom + "'";
-            }
-
-            if (r.DateTo.HasValue)
-            {
-                string dateTo = r.DateTo.Value.ToString("yyyy-MM-dd HH:mm:ss");
-                query += " AND TRANSACTION_DATE <= '" + dateTo + "'";
-            }
-
-            query += " ORDER BY TRANSACTION_DATE DESC";
-
-            GenericGetDataResponse getData = GetData(query);
-
-            if (getData.isSuccess && getData.Data.Rows.Count > 0)
-            {
-                foreach (DataRow dr in getData.Data.Rows)
-                {
-                    WalletTransactionItem item = new WalletTransactionItem();
-                    item.TransactionId = Convert.ToInt32(dr["TRANSACTION_ID"]);
-                    item.TransactionType = dr["TRANSACTION_TYPE"].ToString();
-                    item.Amount = Convert.ToDecimal(dr["AMOUNT"]);
-                    item.BalanceBefore = Convert.ToDecimal(dr["BALANCE_BEFORE"]);
-                    item.BalanceAfter = Convert.ToDecimal(dr["BALANCE_AFTER"]);
-                    item.Remarks = dr["REMARKS"]?.ToString() ?? "";
-                    item.TransactionDate = Convert.ToDateTime(dr["TRANSACTION_DATE"]);
-
-                    resp.Transactions.Add(item);
-                }
-
-                resp.TotalCount = resp.Transactions.Count;
-
-                if (r.Page.HasValue && r.PageSize.HasValue && r.Page.Value > 0 && r.PageSize.Value > 0)
-                {
-                    resp.CurrentPage = r.Page.Value;
-                    resp.PageSize = r.PageSize.Value;
-                    resp.TotalPages = (int)Math.Ceiling((double)resp.TotalCount / r.PageSize.Value);
-
-                    resp.Transactions = resp.Transactions
-                        .Skip((r.Page.Value - 1) * r.PageSize.Value)
-                        .Take(r.PageSize.Value)
-                        .ToList();
-                }
-
-                resp.isSuccess = true;
-                resp.Message = "Transactions retrieved successfully";
-            }
-            else
-            {
-                resp.isSuccess = true;
-                resp.Message = "No transactions found";
-                resp.TotalCount = 0;
-            }
-
-            return resp;
-        }
+       
 
     }
 }
